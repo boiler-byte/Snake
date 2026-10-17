@@ -6,35 +6,61 @@
 <title>Snake</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
   html, body {
-    height: 100%;
-    background: #05010f;
-    color: #0ff;
-    font-family: 'Courier New', monospace;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    user-select: none;
-  }
-  #game {
-    position: relative;
-    width: min(96vw, 96vh);
-    height: min(96vw, 96vh);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-  }
-  #hud {
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    padding: 6px 10px;
-    font-size: clamp(12px, 2.5vw, 18px);
-    letter-spacing: 2px;
-    text-shadow: 0 0 8px #0ff, 0 0 16px #0ff;
-  }
+  height: 100%;
+  background: #05010f;
+  color: #0ff;
+  font-family: 'Courier New', monospace;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+#game {
+  /* Ganze verfügbare Fläche, aber als Flex-Container */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100vw;
+  height: 100vh;
+  padding: 8px;
+  gap: 4px;
+}
+
+#hud {
+  width: min(96vmin, 96vw);
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 8px;
+  font-size: clamp(12px, 2.5vmin, 18px);
+  letter-spacing: 2px;
+  text-shadow: 0 0 8px #0ff, 0 0 16px #0ff;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+#board {
+  /* Quadrat, das in BEIDE Richtungen passt – abzüglich HUD-Höhe */
+  width: min(96vmin, 96vw);
+  height: min(96vmin, 96vw);
+  max-height: calc(100vh - 60px);   /* Platz für HUD lassen */
+  aspect-ratio: 1 / 1;
+  position: relative;
+  background: radial-gradient(circle at 50% 50%, #0a0220 0%, #05010f 100%);
+  border: 2px solid #0ff;
+  box-shadow:
+    0 0 10px #0ff,
+    0 0 30px #0ff inset,
+    0 0 30px #0ff;
+  border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
   #hud .score { color: #0ff; }
   #hud .high { color: #f0f; text-shadow: 0 0 8px #f0f, 0 0 16px #f0f; }
   #board {
