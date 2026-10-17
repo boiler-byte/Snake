@@ -6,69 +6,29 @@
 <title>Snake</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-
   html, body {
-  height: 100%;
-  background: #05010f;
-  color: #0ff;
-  font-family: 'Courier New', monospace;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  user-select: none;
-}
-
-#game {
-  /* Ganze verfügbare Fläche, aber als Flex-Container */
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 100vw;
-  height: 100vh;
-  padding: 8px;
-  gap: 4px;
-}
-
-#hud {
-  width: min(96vmin, 96vw);
-  display: flex;
-  justify-content: space-between;
-  padding: 4px 8px;
-  font-size: clamp(12px, 2.5vmin, 18px);
-  letter-spacing: 2px;
-  text-shadow: 0 0 8px #0ff, 0 0 16px #0ff;
-  flex-shrink: 0;
-  box-sizing: border-box;
-}
-
-#board {
-  /* Quadrat, das in BEIDE Richtungen passt – abzüglich HUD-Höhe */
-  width: min(96vmin, 96vw);
-  height: min(96vmin, 96vw);
-  max-height: calc(100vh - 60px);   /* Platz für HUD lassen */
-  aspect-ratio: 1 / 1;
-  position: relative;
-  background: radial-gradient(circle at 50% 50%, #0a0220 0%, #05010f 100%);
-  border: 2px solid #0ff;
-  box-shadow:
-    0 0 10px #0ff,
-    0 0 30px #0ff inset,
-    0 0 30px #0ff;
-  border-radius: 6px;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-
-  #hud .score { color: #0ff; }
-  #hud .high { color: #f0f; text-shadow: 0 0 8px #f0f, 0 0 16px #f0f; }
+    height: 100%;
+    background: #05010f;
+    color: #0ff;
+    font-family: 'Courier New', monospace;
+    overflow: hidden;
+    user-select: none;
+  }
+  #game {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  /* Board ist IMMER ein perfektes Quadrat, das in beide Richtungen passt.
+     vmin = min(vw, vh) → funktioniert auf 16:9, 4:3, Hochformat etc. */
   #board {
     position: relative;
-    width: 100%;
-    aspect-ratio: 1/1;
-    background:
-      radial-gradient(circle at 50% 50%, #0a0220 0%, #05010f 100%);
+    width: min(96vmin, 96vw, 96vh);
+    height: min(96vmin, 96vw, 96vh);
+    aspect-ratio: 1 / 1;
+    background: radial-gradient(circle at 50% 50%, #0a0220 0%, #05010f 100%);
     border: 2px solid #0ff;
     box-shadow:
       0 0 10px #0ff,
@@ -77,6 +37,24 @@
     border-radius: 6px;
     overflow: hidden;
   }
+  /* HUD liegt als Overlay INNERHALB des Boards → klaut keinen Platz,
+     das Board bleibt exakt quadratisch. */
+  #hud {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 10px;
+    font-size: clamp(11px, 2.2vmin, 17px);
+    letter-spacing: 2px;
+    text-shadow: 0 0 8px #0ff, 0 0 16px #0ff;
+    z-index: 5;
+    pointer-events: none;
+  }
+  #hud .score { color: #0ff; }
+  #hud .high { color: #f0f; text-shadow: 0 0 8px #f0f, 0 0 16px #f0f; }
   canvas {
     display: block;
     width: 100%;
@@ -96,7 +74,7 @@
   }
   .overlay.hidden { display: none; }
   .title {
-    font-size: clamp(36px, 12vw, 90px);
+    font-size: clamp(36px, 12vmin, 90px);
     font-weight: bold;
     letter-spacing: 8px;
     color: #0ff;
@@ -108,7 +86,7 @@
     margin-bottom: 8px;
   }
   .subtitle {
-    font-size: clamp(11px, 2.8vw, 15px);
+    font-size: clamp(11px, 2.8vmin, 15px);
     color: #f0f;
     text-shadow: 0 0 6px #f0f;
     letter-spacing: 3px;
@@ -120,7 +98,7 @@
     border: 2px solid #0ff;
     color: #0ff;
     font-family: inherit;
-    font-size: clamp(14px, 3.5vw, 20px);
+    font-size: clamp(14px, 3.5vmin, 20px);
     letter-spacing: 3px;
     padding: 12px 32px;
     border-radius: 6px;
@@ -136,31 +114,33 @@
     text-shadow: none;
   }
   .finalScore {
-    font-size: clamp(16px, 4vw, 24px);
+    font-size: clamp(16px, 4vmin, 24px);
     color: #0ff;
     text-shadow: 0 0 10px #0ff;
     margin-bottom: 10px;
     letter-spacing: 2px;
   }
   .newHigh {
-    font-size: clamp(13px, 3vw, 18px);
+    font-size: clamp(13px, 3vmin, 18px);
     color: #f0f;
     text-shadow: 0 0 12px #f0f;
     margin-bottom: 24px;
     letter-spacing: 2px;
     animation: pulse 0.8s infinite alternate;
   }
+  .newHigh.hidden { display: none; }
   @keyframes pulse { from { opacity: 0.6; } to { opacity: 1; } }
 </style>
 </head>
 <body>
 <div id="game">
-  <div id="hud">
-    <div class="score">PUNKTE: <span id="score">0</span></div>
-    <div class="high">HIGH: <span id="highscore">0</span></div>
-  </div>
   <div id="board">
     <canvas id="canvas"></canvas>
+
+    <div id="hud">
+      <div class="score">PUNKTE: <span id="score">0</span></div>
+      <div class="high">HIGH: <span id="highscore">0</span></div>
+    </div>
 
     <div id="startScreen" class="overlay">
       <div class="title">SNAKE</div>
@@ -169,7 +149,7 @@
     </div>
 
     <div id="gameOverScreen" class="overlay hidden">
-      <div class="title" style="font-size:clamp(24px,8vw,50px);">GAME OVER</div>
+      <div class="title" style="font-size:clamp(24px,8vmin,50px);">GAME OVER</div>
       <div class="finalScore">PUNKTE: <span id="finalScore">0</span></div>
       <div class="newHigh hidden" id="newHigh">★ NEUER HIGHSCORE ★</div>
       <button class="btn" id="restartBtn">NOCHMAL</button>
@@ -204,10 +184,12 @@
 
   function resizeCanvas() {
     const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
+    // Sicherheitsnetz: Canvas immer quadratisch halten
+    const size = Math.min(rect.width, rect.height);
+    canvas.width = size * dpr;
+    canvas.height = size * dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    cellSize = rect.width / GRID;
+    cellSize = size / GRID;
     if (snake) draw();
   }
   window.addEventListener('resize', resizeCanvas);
@@ -251,7 +233,7 @@
     }
   }
 
-  // Tastatur-Eingabe
+  // Tastatur-Eingabe (Referenz ist nextDir, damit schnelle Mehrfach-Eingaben korrekt sind)
   function setDir(nx, ny) {
     if (nx === -nextDir.x && ny === -nextDir.y) return;
     nextDir = { x: nx, y: ny };
@@ -267,9 +249,10 @@
     }
   });
 
-  // Touch-Steuerung im Nokia-Layout (3x3 Zonen)
-  // Ecken: primäre Richtung bevorzugt, aber wenn diese die aktuelle Richtung ist
-  // (also keine Änderung brächte), wird die sekundäre Richtung genommen.
+  // Touch-Steuerung im Nokia-Layout (3x3 Zonen).
+  // Ecken: primäre Richtung bevorzugt. Bringt diese keine Änderung
+  // (z.B. Fahrt schon nach oben bei Tipp auf oben-links), wird die
+  // sekundäre Richtung genommen. So reagiert jede Ecke zuverlässig.
   function handleTouch(x, y) {
     const rect = canvas.getBoundingClientRect();
     const rx = (x - rect.left) / rect.width;
@@ -281,8 +264,6 @@
 
     const ref = nextDir;
 
-    // Probiert eine Richtung zu setzen. Gibt true zurück, wenn sie
-    // gültig ist UND eine tatsächliche Änderung bringt.
     function trySet(nx, ny) {
       if (nx === -ref.x && ny === -ref.y) return false; // 180°-Wendung
       if (nx === ref.x && ny === ref.y) return false;   // keine Änderung
@@ -392,26 +373,31 @@
   function draw() {
     const w = canvas.width / dpr;
     const h = canvas.height / dpr;
-    const cs = w / GRID;
+    // min(), damit die Zellgröße immer quadratisch ist
+    const cs = Math.min(w, h) / GRID;
+    const offX = (w - cs * GRID) / 2;
+    const offY = (h - cs * GRID) / 2;
 
     ctx.clearRect(0, 0, w, h);
 
+    // Gitterlinien (dezent neon)
     ctx.strokeStyle = 'rgba(0, 255, 255, 0.08)';
     ctx.lineWidth = 1;
     for (let i = 1; i < GRID; i++) {
       ctx.beginPath();
-      ctx.moveTo(i * cs, 0);
-      ctx.lineTo(i * cs, h);
+      ctx.moveTo(offX + i * cs, offY);
+      ctx.lineTo(offX + i * cs, offY + cs * GRID);
       ctx.stroke();
       ctx.beginPath();
-      ctx.moveTo(0, i * cs);
-      ctx.lineTo(w, i * cs);
+      ctx.moveTo(offX, offY + i * cs);
+      ctx.lineTo(offX + cs * GRID, offY + i * cs);
       ctx.stroke();
     }
 
+    // Tier (selten) – Magenta mit Glow, pulsierend
     if (animal) {
-      const cx = (animal.x + 0.5) * cs;
-      const cy = (animal.y + 0.5) * cs;
+      const cx = offX + (animal.x + 0.5) * cs;
+      const cy = offY + (animal.y + 0.5) * cs;
       const t = performance.now() / 200;
       const r = cs * (0.32 + Math.sin(t) * 0.05);
       ctx.save();
@@ -432,9 +418,10 @@
       ctx.restore();
     }
 
+    // Apfel – leuchtendes grün/cyan
     if (food) {
-      const cx = (food.x + 0.5) * cs;
-      const cy = (food.y + 0.5) * cs;
+      const cx = offX + (food.x + 0.5) * cs;
+      const cy = offY + (food.y + 0.5) * cs;
       const r = cs * 0.3;
       ctx.save();
       ctx.shadowColor = '#0f0';
@@ -450,11 +437,12 @@
       ctx.restore();
     }
 
+    // Schlange
     for (let i = snake.length - 1; i >= 0; i--) {
       const s = snake[i];
       const pad = cs * 0.1;
-      const x = s.x * cs + pad;
-      const y = s.y * cs + pad;
+      const x = offX + s.x * cs + pad;
+      const y = offY + s.y * cs + pad;
       const size = cs - pad * 2;
 
       const isHead = i === 0;
@@ -474,6 +462,7 @@
       roundRect(ctx, x, y, size, size, radius);
       ctx.fill();
 
+      // Kopf: Augen
       if (isHead) {
         ctx.shadowBlur = 0;
         ctx.fillStyle = '#05010f';
@@ -530,6 +519,7 @@
   startBtn.addEventListener('click', startGame);
   restartBtn.addEventListener('click', startGame);
 
+  // Initial
   resizeCanvas();
   resetGame();
   running = false;
