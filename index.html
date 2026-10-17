@@ -160,9 +160,9 @@
 <script>
 (() => {
   const GRID = 20;
-  const SPEED_START = 180;
-  const SPEED_MIN = 70;
-  const SPEED_STEP = 4;
+  const SPEED_START = 200; //org. 180
+  const SPEED_MIN = 100; //org. 70
+  const SPEED_STEP = 1; //org. 4
 
   const canvas = document.getElementById('canvas');
   const ctx = canvas.getContext('2d');
@@ -193,6 +193,22 @@
     if (snake) draw();
   }
   window.addEventListener('resize', resizeCanvas);
+
+
+  let audioCtx;
+  function playEatSound() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(880, audioCtx.currentTime);        // A5
+    osc.frequency.exponentialRampToValueAtTime(1320, audioCtx.currentTime + 0.08); // E6
+    gain.gain.setValueAtTime(0.10, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.12);
+  }
 
   function resetGame() {
     snake = [
@@ -332,8 +348,10 @@
       ate = true;
       scoreEl.textContent = score;
       food = spawnFood();
-      speed = Math.max(SPEED_MIN, speed - SPEED_STEP);
+      speed = Math.max(SPEED_MIN, speed - SPEED_STEP );
+      // console.log( "Speed", speed )
       spawnAnimal();
+      playEatSound();
     }
 
     if (animal && newHead.x === animal.x && newHead.y === animal.y) {
@@ -341,6 +359,7 @@
       ate = true;
       scoreEl.textContent = score;
       animal = null;
+      playEatSound();
     }
 
     if (!ate) {
