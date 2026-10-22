@@ -68,6 +68,42 @@
     width: 100%;
     height: 100%;
   }
+
+  /* ===== Spiel-beenden-Button ganz oben ===== */
+  .end-btn {
+    position: fixed;
+    top: 6px;
+    top: max(6px, env(safe-area-inset-top, 0px));
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+    background: rgba(5, 1, 15, 0.85);
+    border: 2px solid #f0f;
+    color: #f0f;
+    font-family: inherit;
+    font-size: clamp(10px, 2.2vmin, 14px);
+    font-weight: bold;
+    letter-spacing: 2px;
+    padding: 6px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    text-shadow: 0 0 6px #f0f;
+    box-shadow: 0 0 10px rgba(255, 0, 255, 0.6);
+    transition: all 0.15s;
+    white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+	transition: all 0.6s;
+  }
+  .end-btn:hover, .end-btn:active {
+    background: #f0f;
+    color: #05010f;
+    box-shadow: 0 0 20px #f0f, 0 0 40px #f0f;
+    text-shadow: none;
+	opacity: 1;
+  }
+  .end-btn.hidden { display: none; }
+  /* =====  ===== */
+
   .overlay {
     position: absolute;
     inset: 0;
@@ -138,9 +174,18 @@
   }
   .newHigh.hidden { display: none; }
   @keyframes pulse { from { opacity: 0.6; } to { opacity: 1; } }
+  
+  
+  @media (min-width: 900px) { 
+	.end-btn { opacity: 0.3; }
+  }
 </style>
 </head>
 <body>
+
+<!-- NEU: Spiel-beenden-Button ganz oben -->
+<button id="endBtn" type="button" class="end-btn hidden">✕ BEENDEN</button>
+
 <div id="game">
   <div id="board">
     <canvas id="canvas"></canvas>
@@ -182,6 +227,7 @@
   const newHighEl = document.getElementById('newHigh');
   const startBtn = document.getElementById('startBtn');
   const restartBtn = document.getElementById('restartBtn');
+  const endBtn = document.getElementById('endBtn'); // NEU
 
   let cellSize = 0;
   let dpr = window.devicePixelRatio || 1;
@@ -337,8 +383,11 @@
 
   // Start: nur merken – bewusst KEIN preventDefault,
   // damit die Buttons auf den Overlays klickbar bleiben.
+  // NEU: Touches auf Buttons (z. B. „Beenden") werden ignoriert,
+  //      damit der Klick nicht durch den touchend-Handler geschluckt wird.
   window.addEventListener('touchstart', (e) => {
     if (!running || e.touches.length > 1) return;
+    if (e.target && e.target.closest && e.target.closest('button')) return;
     const t = e.changedTouches[0];
     touchStart = { id: t.identifier, x: t.clientX, y: t.clientY, swiped: false };
   }, { passive: true });
@@ -380,6 +429,12 @@
     if (!running) return;
     if (performance.now() - lastTouchEnd < 500) return;
     handleTouch(e.clientX, e.clientY);
+  });
+
+  // NEU: Spiel-beenden-Button
+  endBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (running) gameOver();
   });
 
   function step() {
@@ -439,6 +494,7 @@
   function gameOver() {
     running = false;
     clearInterval(tickTimer);
+    endBtn.classList.add('hidden'); // NEU: Beenden-Button ausblenden
     if (score > highscore) {
       highscore = score;
       localStorage.setItem('snakeHighscore', highscore);
@@ -591,6 +647,7 @@
   function startGame() {
     startScreen.classList.add('hidden');
     gameOverScreen.classList.add('hidden');
+    endBtn.classList.remove('hidden'); // NEU: Beenden-Button einblenden
     resizeCanvas();
     resetGame();
     draw();
