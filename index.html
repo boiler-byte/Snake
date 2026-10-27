@@ -1,13 +1,15 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#000000">
-  <!-- iOS-Spezifika (Safari) -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Snake">
-  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <!-- ===== PWA ===== -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#05010f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Snake">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Snake</title>
@@ -508,18 +510,17 @@
     draw();
   }
 
-  function draw() {
+    function draw() {
     const w = canvas.width / dpr;
     const h = canvas.height / dpr;
-    // min(), damit die Zellgröße immer quadratisch ist
     const cs = Math.min(w, h) / GRID;
     const offX = (w - cs * GRID) / 2;
     const offY = (h - cs * GRID) / 2;
 
     ctx.clearRect(0, 0, w, h);
 
-    // Gitterlinien (dezent neon)
-    ctx.strokeStyle = 'rgba(0, 255, 255, 0.08)';
+    // Gitterlinien (dezent, passend zum Icon)
+    ctx.strokeStyle = 'rgba(0, 255, 255, 0.05)';
     ctx.lineWidth = 1;
     for (let i = 1; i < GRID; i++) {
       ctx.beginPath();
@@ -532,15 +533,12 @@
       ctx.stroke();
     }
 
-    // Tier (selten) – Magenta mit Glow, pulsierend
+    // Tier (selten) – Magenta
     if (animal) {
       const cx = offX + (animal.x + 0.5) * cs;
       const cy = offY + (animal.y + 0.5) * cs;
       const t = performance.now() / 200;
       const r = cs * (0.32 + Math.sin(t) * 0.05);
-      ctx.save();
-      ctx.shadowColor = '#f0f';
-      ctx.shadowBlur = 18;
       ctx.fillStyle = '#f0f';
       ctx.beginPath();
       for (let i = 0; i < 10; i++) {
@@ -553,86 +551,107 @@
       }
       ctx.closePath();
       ctx.fill();
-      ctx.restore();
     }
 
-    // Apfel – leuchtendes grün/cyan
+    // Apfel (Food) – im Stil des Icons
     if (food) {
       const cx = offX + (food.x + 0.5) * cs;
       const cy = offY + (food.y + 0.5) * cs;
-      const r = cs * 0.3;
-      ctx.save();
-      ctx.shadowColor = '#0f0';
-      ctx.shadowBlur = 15;
-      ctx.fillStyle = '#3f9';
+      const r = cs * 0.32;
+      
+      ctx.fillStyle = '#1dee59'; // Helles Apfelgrün
+      
+      // Blatt / Stiel
+      ctx.beginPath();
+      ctx.moveTo(cx + r * 0.1, cy - r * 0.8);
+      ctx.quadraticCurveTo(cx + r * 1.2, cy - r * 1.5, cx + r * 1.3, cy - r * 0.9);
+      ctx.quadraticCurveTo(cx + r * 0.7, cy - r * 0.5, cx + r * 0.1, cy - r * 0.8);
+      ctx.fill();
+
+      // Apfelkörper
       ctx.beginPath();
       ctx.arc(cx, cy, r, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = 'rgba(255,255,255,0.8)';
+
+      // Highlight
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
       ctx.beginPath();
-      ctx.arc(cx - r*0.3, cy - r*0.3, r*0.22, 0, Math.PI * 2);
+      ctx.arc(cx - r * 0.35, cy - r * 0.35, r * 0.25, 0, Math.PI * 2);
       ctx.fill();
-      ctx.restore();
     }
 
-    // Schlange
-    for (let i = snake.length - 1; i >= 0; i--) {
-      const s = snake[i];
-      const pad = cs * 0.1;
-      const x = offX + s.x * cs + pad;
-      const y = offY + s.y * cs + pad;
-      const size = cs - pad * 2;
-
-      const isHead = i === 0;
-      const ratio = 1 - i / (snake.length + 3);
-
-      ctx.save();
-      if (isHead) {
-        ctx.shadowColor = '#0ff';
-        ctx.shadowBlur = 20;
-        ctx.fillStyle = '#7fffff';
-      } else {
-        ctx.shadowColor = '#0ff';
-        ctx.shadowBlur = 10;
-        ctx.fillStyle = `rgba(0, 255, 255, ${0.35 + ratio * 0.6})`;
+    // Schlange – im Stil des Icons (durchgehender Schlauch)
+    const pad = cs * 0.1;
+    const drawSnakePath = (color, width) => {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = width;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      
+      for (let i = 0; i < snake.length; i++) {
+        const pt = { x: offX + (snake[i].x + 0.5) * cs, y: offY + (snake[i].y + 0.5) * cs };
+        
+        if (i === 0) {
+          ctx.moveTo(pt.x, pt.y);
+        } else {
+          const prev = snake[i - 1];
+          // Check auf Wrap-Around (Teleportation über den Rand)
+          if (Math.abs(snake[i].x - prev.x) > 1 || Math.abs(snake[i].y - prev.y) > 1) {
+            ctx.moveTo(pt.x, pt.y); // Pfad unterbrechen
+          } else {
+            ctx.lineTo(pt.x, pt.y);
+          }
+        }
       }
-      const radius = isHead ? size * 0.28 : size * 0.2;
-      roundRect(ctx, x, y, size, size, radius);
-      ctx.fill();
+      ctx.stroke();
+    };
 
-      // Kopf: Augen
-      if (isHead) {
-        ctx.shadowBlur = 0;
-        ctx.fillStyle = '#05010f';
-        const eyeSize = size * 0.18;
-        const ex = size * 0.3;
-        const ey = size * 0.3;
-        let e1x, e1y, e2x, e2y;
-        if (dir.x === 1) { e1x = x + size - ex; e1y = y + ey; e2x = x + size - ex; e2y = y + size - ey - eyeSize; }
-        else if (dir.x === -1) { e1x = x + ex - eyeSize; e1y = y + ey; e2x = x + ex - eyeSize; e2y = y + size - ey - eyeSize; }
-        else if (dir.y === -1) { e1x = x + ey; e1y = y + ex - eyeSize; e2x = x + size - ey - eyeSize; e2y = y + ex - eyeSize; }
-        else { e1x = x + ey; e1y = y + size - ex; e2x = x + size - ey - eyeSize; e2y = y + size - ex; }
-        ctx.beginPath();
-        ctx.arc(e1x + eyeSize/2, e1y + eyeSize/2, eyeSize/2, 0, Math.PI*2);
-        ctx.arc(e2x + eyeSize/2, e2y + eyeSize/2, eyeSize/2, 0, Math.PI*2);
-        ctx.fill();
-      }
-      ctx.restore();
-    }
-  }
+    // 1. Dunkler Rand der Schlange
+    drawSnakePath('#0a9396', cs - pad * 2);
+    // 2. Helle Innere Füllung
+    drawSnakePath('#b2fefa', cs - pad * 2 - (cs * 0.15));
 
-  function roundRect(ctx, x, y, w, h, r) {
+    // Kopf der Schlange
+    const head = { x: offX + (snake[0].x + 0.5) * cs, y: offY + (snake[0].y + 0.5) * cs };
+    const headRadius = (cs - pad * 2) / 2;
+
+    // Kopf-Rand
+    ctx.fillStyle = '#0a9396';
     ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.lineTo(x + w - r, y);
-    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-    ctx.lineTo(x + w, y + h - r);
-    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-    ctx.lineTo(x + r, y + h);
-    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-    ctx.lineTo(x, y + r);
-    ctx.quadraticCurveTo(x, y, x + r, y);
-    ctx.closePath();
+    ctx.arc(head.x, head.y, headRadius, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Kopf-Inneres
+    ctx.fillStyle = '#b2fefa';
+    ctx.beginPath();
+    ctx.arc(head.x, head.y, headRadius * 0.75, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Augen (Schwarze Punkte)
+    ctx.fillStyle = '#000000';
+    const eyeOffset = cs * 0.15;
+    const eyeRadius = cs * 0.08;
+    let e1x, e1y, e2x, e2y;
+
+    if (dir.x === 1) { // Rechts
+      e1x = head.x + eyeOffset; e1y = head.y - eyeOffset * 0.7;
+      e2x = head.x + eyeOffset; e2y = head.y + eyeOffset * 0.7;
+    } else if (dir.x === -1) { // Links
+      e1x = head.x - eyeOffset; e1y = head.y - eyeOffset * 0.7;
+      e2x = head.x - eyeOffset; e2y = head.y + eyeOffset * 0.7;
+    } else if (dir.y === -1) { // Oben
+      e1x = head.x - eyeOffset * 0.7; e1y = head.y - eyeOffset;
+      e2x = head.x + eyeOffset * 0.7; e2y = head.y - eyeOffset;
+    } else { // Unten
+      e1x = head.x - eyeOffset * 0.7; e1y = head.y + eyeOffset;
+      e2x = head.x + eyeOffset * 0.7; e2y = head.y + eyeOffset;
+    }
+
+    ctx.beginPath();
+    ctx.arc(e1x, e1y, eyeRadius, 0, Math.PI * 2);
+    ctx.arc(e2x, e2y, eyeRadius, 0, Math.PI * 2);
+    ctx.fill();
   }
 
   function loop(now) {
@@ -664,6 +683,45 @@
   running = false;
   draw();
 })();
+</script>
+
+<script>
+  // ===== Service Worker registrieren (nur https / localhost) =====
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker
+        .register('./sw.js', { scope: './' })
+        .then((reg) => {
+          // Update-Prüfung im Hintergrund
+          reg.update().catch(() => {});
+
+          // Wenn eine neue Version wartet → sofort übernehmen
+          reg.addEventListener('updatefound', () => {
+            const newWorker = reg.installing;
+            if (!newWorker) return;
+            newWorker.addEventListener('statechange', () => {
+              if (
+                newWorker.state === 'installed' &&
+                navigator.serviceWorker.controller
+              ) {
+                newWorker.postMessage({ type: 'SKIP_WAITING' });
+              }
+            });
+          });
+        })
+        .catch((err) => {
+          console.warn('[SW] Registrierung fehlgeschlagen:', err);
+        });
+
+      // Seite neu laden, wenn ein neuer SW übernommen hat
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (refreshing) return;
+        refreshing = true;
+        window.location.reload();
+      });
+    });
+  }
 </script>
 </body>
 </html>

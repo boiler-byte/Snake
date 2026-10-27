@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Snake">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="72%">
+      <stop offset="0" stop-color="#0a0220"/>
+      <stop offset="1" stop-color="#05010f"/>
+    </radialGradient>
+    <filter id="glowCyan" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="12" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="glowGreen" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="10" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Vollflächiger Hintergrund (wird von der Maske beschnitten) -->
+  <rect width="512" height="512" fill="url(#bg)"/>
+
+  <!-- Inhalt in die Safe Zone skalieren -->
+  <g transform="translate(256 256) scale(0.72) translate(-256 -256)">
+
+    <g stroke="#00ffff" stroke-opacity="0.07" stroke-width="2">
+      <path d="M64 0V512M128 0V512M192 0V512M256 0V512M320 0V512M384 0V512M448 0V512"/>
+      <path d="M0 64H512M0 128H512M0 192H512M0 256H512M0 320H512M0 384H512M0 448H512"/>
+    </g>
+
+    <g fill="none" stroke-linecap="round" stroke-linejoin="round" filter="url(#glowCyan)">
+      <path d="M128 384V256H256V128H384" stroke="#00ffff" stroke-opacity="0.55" stroke-width="76"/>
+      <path d="M128 384V256H256V128H384" stroke="#a8ffff" stroke-width="30"/>
+    </g>
+
+    <circle cx="384" cy="128" r="44" fill="#7fffff" filter="url(#glowCyan)"/>
+    <circle cx="398" cy="112" r="9" fill="#05010f"/>
+    <circle cx="398" cy="144" r="9" fill="#05010f"/>
+
+    <g filter="url(#glowGreen)">
+      <path d="M336 296 q10 -26 36 -30 q-6 30 -34 34 z" fill="#3f9"/>
+      <circle cx="336" cy="336" r="42" fill="#3f9"/>
+      <circle cx="322" cy="322" r="12" fill="#ffffff" fill-opacity="0.85"/>
+    </g>
+
+  </g>
+</svg>
